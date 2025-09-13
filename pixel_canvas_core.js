@@ -20,6 +20,7 @@ class PixelCanvasCore {
             accent4: 'FF69B4',   // Pink
             accent5: 'FFA500',   // Orange
             accent6: 'FF0000',   // Red
+            accent7: '084f4a',   // Teal
             symbols: {
                 'F5F5DC': '.',   // Base color symbol
                 'FFD700': 'Y',   // Yellow symbol
@@ -27,19 +28,21 @@ class PixelCanvasCore {
                 '0000FF': 'U',   // Blue symbol
                 'FF69B4': 'P',   // Pink symbol
                 'FFA500': 'O',   // Orange symbol
-                'FF0000': 'R'    // Red symbol
+                'FF0000': 'R',   // Red symbol
+                '084f4a': 'T'    // Teal symbol
             }
         };
         
-        // Default ratio: 50% base, 10% each accent color
+        // Default ratio: 50% base, ~7.14% each accent color (50% / 7 = ~7.14%)
         this.ratios = {
             base: 0.5,
-            accent1: 0.1,
-            accent2: 0.1,
-            accent3: 0.1,
-            accent4: 0.1,
-            accent5: 0.1,
-            accent6: 0.1
+            accent1: 0.0714,
+            accent2: 0.0714,
+            accent3: 0.0714,
+            accent4: 0.0714,
+            accent5: 0.0714,
+            accent6: 0.0714,
+            accent7: 0.0714
         };
         
         // Internal state
@@ -138,7 +141,7 @@ class PixelCanvasCore {
      */
     getAvailableColors(neighbors) {
         const available = [];
-        const colorKeys = ['base', 'accent1', 'accent2', 'accent3', 'accent4', 'accent5', 'accent6'];
+        const colorKeys = ['base', 'accent1', 'accent2', 'accent3', 'accent4', 'accent5', 'accent6', 'accent7'];
         
         colorKeys.forEach(colorKey => {
             const colorValue = this.colors[colorKey];
