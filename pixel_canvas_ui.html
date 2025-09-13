@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Canvas Generator</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #2a2a2a;
+            color: #f5f5dc;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.4;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+        
+        .controls {
+            background: #3a3a3a;
+            padding: 20px;
+            border-radius: 8px;
+            height: fit-content;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input[type="text"], input[type="range"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background: #4a4a4a;
+            color: #f5f5dc;
+            box-sizing: border-box;
+        }
+        
+        input[type="range"] {
+            margin: 10px 0;
+        }
+        
+        .range-display {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #ffd700;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 0;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #ffed4e;
+        }
+        
+        .output-area {
+            background: #3a3a3a;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .canvas-display {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
+        .svg-canvas {
+            border: 2px solid #555;
+            border-radius: 4px;
+            background: white;
+        }
+        
+        .text-output {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.2;
+            white-space: pre;
+            overflow: auto;
+            max-height: 400px;
+        }
+        
+        .info-panel {
+            background: #4a4a4a;
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .info-item {
+            margin-bottom: 8px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: #4a4a4a;
+            border: none;
+            color: #f5f5dc;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            margin-right: 2px;
+        }
+        
+        .tab.active {
+            background: #3a3a3a;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .export-buttons button {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+        }
+        
+        .color-preview {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #555;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        
+        .color-swatch:hover {
+            border-color: #ffd700;
+        }
+        
+        .color-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 5px 0;
+        }
+        
+        .color-count {
+            min-width: 30px;
+            text-align: right;
+            font-size: 12px;
+            color: #ffd700;
+        }
+        
+        .color-label {
+            font-size: 11px;
+            color: #ccc;
+            margin-bottom: 5px;
+        }
+        
+        .hidden-color-input {
+            position: absolute;
+            left: -9999px;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .color-picker-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .color-picker-dialog {
+            background: #3a3a3a;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .color-picker-dialog input[type="color"] {
+            width: 100px;
+            height: 100px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .color-picker-dialog button {
+            margin: 10px 5px;
+            padding: 8px 16px;
+            background: #ffd700;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .base-color { background: #F5F5DC; color: #000; }
+        .accent1-color { background: #FFD700; color: #000; }
+        .accent2-color { background: #000000; color: #fff; }
+        .accent3-color { background: #0000FF; color: #fff; }
+        .accent4-color { background: #FF69B4; color: #000; }
+        .accent5-color { background: #FFA500; color: #000; }
+        .accent6-color { background: #FF0000; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <h2>🎮 Pixel Canvas Generator</h2>
+            
+            <div class="control-group">
+                <label for="seedInput">Seed:</label>
+                <input type="text" id="seedInput" value="test-seed-123" placeholder="Enter seed string">
+            </div>
+            
+            <div class="control-group">
+                <h3>Color Balance</h3>
+                <div class="color-label">Color Counts (click to change):</div>
+                <div id="colorPreview">
+                    <!-- Dynamic color preview will be generated here -->
+                </div>
+                <input type="color" id="hiddenColorInput" class="hidden-color-input">
+                
+                <!-- Color Picker Overlay -->
+                <div id="colorPickerOverlay" class="color-picker-overlay" onclick="cancelColorChange()">
+                    <div class="color-picker-dialog" onclick="event.stopPropagation()">
+                        <h3>Choose Color</h3>
+                        <input type="color" id="colorPickerInput">
+                        <br>
+                        <button onclick="confirmColorChange()">Apply</button>
+                        <button onclick="cancelColorChange()">Cancel</button>
+                    </div>
+                </div>
+                
+                <label for="baseAccentRatio">Base vs Accent Colors:</label>
+                <input type="range" id="baseAccentRatio" min="0" max="1" step="0.05" value="0.5">
+                <div class="range-display" id="baseAccentRatioDisplay">50% Base / 50% Accent</div>
+            </div>
+            
+            <div class="control-group">
+                <button onclick="randomSeed()">🎲 Random Seed</button>
+            </div>
+            
+            <div class="control-group">
+                <h3>Canvas Info</h3>
+                <div class="info-panel">
+                    <div class="info-item">
+                        <span class="info-label">Dimensions:</span> 19 × 29 pixels (5+24)
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Rules:</span> Only base color can be adjacent
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Colors:</span> Off-white + 6 accent colors
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="output-area">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('visual')">Visual</button>
+                <button class="tab" onclick="showTab('text')">Text Matrix</button>
+                <button class="tab" onclick="showTab('svg')">SVG Code</button>
+            </div>
+            
+            <div id="visualTab" class="tab-content active">
+                <h3>Visual Output</h3>
+                <div class="canvas-display">
+                    <div id="svgContainer"></div>
+                </div>
+                <div class="export-buttons">
+                    <button onclick="downloadSVG()">📥 Download SVG</button>
+                    <button onclick="copySVG()">📋 Copy SVG</button>
+                </div>
+            </div>
+            
+            <div id="textTab" class="tab-content">
+                <h3>Text Matrix Output</h3>
+                <div class="text-output" id="textOutput">Click "Generate Canvas" to see text output</div>
+                <div class="export-buttons">
+                    <button onclick="downloadText()">📥 Download Text</button>
+                    <button onclick="copyText()">📋 Copy Text</button>
+                </div>
+            </div>
+            
+            <div id="svgTab" class="tab-content">
+                <h3>SVG Code</h3>
+                <div class="text-output" id="svgOutput">Click "Generate Canvas" to see SVG code</div>
+                <div class="export-buttons">
+                    <button onclick="downloadSVG()">📥 Download SVG</button>
+                    <button onclick="copySVG()">📋 Copy SVG</button>
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <div class="info-item">
+                    <span class="info-label">Current Seed:</span> <span id="currentSeed">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Validation:</span> <span id="validationStatus">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Generation Time:</span> <span id="generationTime">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="pixel_canvas_core.js"></script>
+    <script>
+        let currentResult = null;
+        let currentColors = {
+            base: '#F5F5DC',
+            accent1: '#FFD700',
+            accent2: '#000000',
+            accent3: '#0000FF',
+            accent4: '#FF69B4',
+            accent5: '#FFA500',
+            accent6: '#FF0000'
+        };
+        
+        // Count colors in canvas
+        function countColors(canvas) {
+            const counts = {
+                base: 0,
+                accent1: 0,
+                accent2: 0,
+                accent3: 0,
+                accent4: 0,
+                accent5: 0,
+                accent6: 0
+            };
+            
+            // Create dynamic color map based on current colors
+            const colorMap = {
+                [currentColors.base.replace('#', '')]: 'base',
+                [currentColors.accent1.replace('#', '')]: 'accent1',
+                [currentColors.accent2.replace('#', '')]: 'accent2',
+                [currentColors.accent3.replace('#', '')]: 'accent3',
+                [currentColors.accent4.replace('#', '')]: 'accent4',
+                [currentColors.accent5.replace('#', '')]: 'accent5',
+                [currentColors.accent6.replace('#', '')]: 'accent6'
+            };
+            
+            for (let y = 0; y < canvas.length; y++) {
+                for (let x = 0; x < canvas[y].length; x++) {
+                    const color = canvas[y][x];
+                    const colorKey = colorMap[color];
+                    if (colorKey) {
+                        counts[colorKey]++;
+                    }
+                }
+            }
+            
+            return counts;
+        }
+        
+        // Update color preview with counts
+        function updateColorPreview() {
+            const preview = document.getElementById('colorPreview');
+            let counts = { base: 0, accent1: 0, accent2: 0, accent3: 0, accent4: 0, accent5: 0, accent6: 0 };
+            
+            if (currentResult) {
+                // Count colors from both canvases
+                const topCounts = countColors(currentResult.topCanvas);
+                const mainCounts = countColors(currentResult.canvas);
+                
+                // Add counts together
+                for (let key in counts) {
+                    counts[key] = topCounts[key] + mainCounts[key];
+                }
+            }
+            
+            const colorInfo = [
+                { key: 'base', symbol: '.', name: 'Base', color: currentColors.base },
+                { key: 'accent1', symbol: 'Y', name: 'Yellow', color: currentColors.accent1 },
+                { key: 'accent2', symbol: 'B', name: 'Black', color: currentColors.accent2 },
+                { key: 'accent3', symbol: 'U', name: 'Blue', color: currentColors.accent3 },
+                { key: 'accent4', symbol: 'P', name: 'Pink', color: currentColors.accent4 },
+                { key: 'accent5', symbol: 'O', name: 'Orange', color: currentColors.accent5 },
+                { key: 'accent6', symbol: 'R', name: 'Red', color: currentColors.accent6 }
+            ];
+            
+            let html = '';
+            colorInfo.forEach(info => {
+                const textColor = getContrastColor(info.color);
+                html += `
+                    <div class="color-info">
+                        <div class="color-count">${counts[info.key]}</div>
+                        <div class="color-swatch" 
+                             style="background: ${info.color}; color: ${textColor};" 
+                             title="${info.name} (${info.key})"
+                             onclick="changeColor('${info.key}', event)">
+                            ${info.symbol}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            preview.innerHTML = html;
+        }
+        
+        // Get contrast color for text
+        function getContrastColor(hexColor) {
+            const r = parseInt(hexColor.substr(1, 2), 16);
+            const g = parseInt(hexColor.substr(3, 2), 16);
+            const b = parseInt(hexColor.substr(5, 2), 16);
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            return brightness > 128 ? '#000' : '#fff';
+        }
+        
+        // Change color using color picker overlay
+        function changeColor(colorKey, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            console.log('changeColor called for:', colorKey);
+            
+            // Store the color key being changed
+            window.currentColorKey = colorKey;
+            
+            // Set the current color in the picker
+            const colorPickerInput = document.getElementById('colorPickerInput');
+            colorPickerInput.value = currentColors[colorKey];
+            
+            // Show the overlay
+            const overlay = document.getElementById('colorPickerOverlay');
+            overlay.style.display = 'flex';
+        }
+        
+        // Confirm color change
+        function confirmColorChange() {
+            const colorPickerInput = document.getElementById('colorPickerInput');
+            const newColor = colorPickerInput.value.toUpperCase();
+            const colorKey = window.currentColorKey;
+            
+            if (colorKey && newColor) {
+                console.log('Color changed:', colorKey, 'to', newColor);
+                currentColors[colorKey] = newColor;
+                updateColorPreview();
+                generateCanvas();
+            }
+            
+            // Hide the overlay
+            const overlay = document.getElementById('colorPickerOverlay');
+            overlay.style.display = 'none';
+        }
+        
+        // Cancel color change
+        function cancelColorChange() {
+            // Hide the overlay
+            const overlay = document.getElementById('colorPickerOverlay');
+            overlay.style.display = 'none';
+        }
+        
+        // Handle color change from color picker
+        function handleColorChange() {
+            console.log('handleColorChange called');
+            const colorInput = document.getElementById('hiddenColorInput');
+            const colorKey = colorInput.dataset.colorKey;
+            const newColor = colorInput.value.toUpperCase();
+            
+            console.log('Color changed:', colorKey, 'to', newColor);
+            
+            if (colorKey && newColor) {
+                currentColors[colorKey] = newColor;
+                updateColorPreview();
+                generateCanvas();
+            }
+        }
+        
+        // Update ratio display
+        function updateRatioDisplay() {
+            const baseAccentRatio = parseFloat(document.getElementById('baseAccentRatio').value);
+            const basePercent = Math.round(baseAccentRatio * 100);
+            const accentPercent = Math.round((1 - baseAccentRatio) * 100);
+            
+            document.getElementById('baseAccentRatioDisplay').textContent = 
+                `${basePercent}% Base / ${accentPercent}% Accent`;
+        }
+        
+        // Show tab content
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Show selected tab
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+        
+        // Generate random seed
+        function randomSeed() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < 12; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('seedInput').value = result;
+            generateCanvas(); // Auto-generate after setting new seed
+        }
+        
+        // Generate canvas
+        function generateCanvas() {
+            console.log('generateCanvas called');
+            const startTime = performance.now();
+            
+            const seed = document.getElementById('seedInput').value || 'default-seed';
+            const baseAccentRatio = parseFloat(document.getElementById('baseAccentRatio').value);
+            
+            // Calculate ratios: base gets the specified percentage, accent colors split the remainder
+            const baseRatio = baseAccentRatio;
+            const accentRatio = (1 - baseAccentRatio) / 6; // Split equally among 6 accent colors
+            
+            const normalizedRatios = {
+                base: baseRatio,
+                accent1: accentRatio,
+                accent2: accentRatio,
+                accent3: accentRatio,
+                accent4: accentRatio,
+                accent5: accentRatio,
+                accent6: accentRatio
+            };
+            
+            // Create custom colors object
+            const customColors = {
+                base: currentColors.base.replace('#', ''),
+                accent1: currentColors.accent1.replace('#', ''),
+                accent2: currentColors.accent2.replace('#', ''),
+                accent3: currentColors.accent3.replace('#', ''),
+                accent4: currentColors.accent4.replace('#', ''),
+                accent5: currentColors.accent5.replace('#', ''),
+                accent6: currentColors.accent6.replace('#', ''),
+                symbols: {
+                    [currentColors.base.replace('#', '')]: '.',
+                    [currentColors.accent1.replace('#', '')]: 'Y',
+                    [currentColors.accent2.replace('#', '')]: 'B',
+                    [currentColors.accent3.replace('#', '')]: 'U',
+                    [currentColors.accent4.replace('#', '')]: 'P',
+                    [currentColors.accent5.replace('#', '')]: 'O',
+                    [currentColors.accent6.replace('#', '')]: 'R'
+                }
+            };
+            
+            const generator = new PixelCanvasCore();
+            // Update generator colors
+            generator.colors = customColors;
+            currentResult = generator.generate(seed, normalizedRatios);
+            
+            const endTime = performance.now();
+            const generationTime = (endTime - startTime).toFixed(2);
+            
+            // Update displays
+            updateVisualOutput(currentResult, generator);
+            updateTextOutput(currentResult, generator);
+            updateSVGOutput(currentResult, generator);
+            updateInfo(currentResult, generationTime, generator);
+            updateColorPreview(); // Update color counts
+        }
+        
+        // Update visual output
+        function updateVisualOutput(result, generator) {
+            const svgContainer = document.getElementById('svgContainer');
+            const svg = generator.toCombinedSVG(result.topCanvas, result.canvas, 15, 40);
+            svgContainer.innerHTML = svg;
+        }
+        
+        // Update text output
+        function updateTextOutput(result, generator) {
+            const textOutput = document.getElementById('textOutput');
+            const topMatrix = generator.toSymbolMatrix(result.topCanvas);
+            const mainMatrix = generator.toSymbolMatrix(result.canvas);
+            textOutput.textContent = topMatrix + '\n' + mainMatrix;
+        }
+        
+        // Update SVG output
+        function updateSVGOutput(result, generator) {
+            const svgOutput = document.getElementById('svgOutput');
+            const svg = generator.toCombinedSVG(result.topCanvas, result.canvas);
+            svgOutput.textContent = svg;
+        }
+        
+        // Update info panel
+        function updateInfo(result, generationTime, generator) {
+            document.getElementById('currentSeed').textContent = result.seed;
+            document.getElementById('validationStatus').textContent = generator.validateCanvas(result.canvas) ? '✅ Valid' : '❌ Invalid';
+            document.getElementById('generationTime').textContent = generationTime + 'ms';
+        }
+        
+        // Download functions
+        function downloadSVG() {
+            if (!currentResult) return;
+            const generator = new PixelCanvasCore();
+            const svg = generator.toCombinedSVG(currentResult.topCanvas, currentResult.canvas);
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pixel-canvas-${currentResult.seed.replace(/[^a-zA-Z0-9]/g, '-')}.svg`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function downloadText() {
+            if (!currentResult) return;
+            const generator = new PixelCanvasCore();
+            const topMatrix = generator.toSymbolMatrix(currentResult.topCanvas);
+            const mainMatrix = generator.toSymbolMatrix(currentResult.canvas);
+            const text = topMatrix + '\n' + mainMatrix;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pixel-canvas-${currentResult.seed.replace(/[^a-zA-Z0-9]/g, '-')}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function copySVG() {
+            if (!currentResult) return;
+            const generator = new PixelCanvasCore();
+            const svg = generator.toCombinedSVG(currentResult.topCanvas, currentResult.canvas);
+            navigator.clipboard.writeText(svg).then(() => {
+                alert('SVG copied to clipboard!');
+            });
+        }
+        
+        function copyText() {
+            if (!currentResult) return;
+            const generator = new PixelCanvasCore();
+            const topMatrix = generator.toSymbolMatrix(currentResult.topCanvas);
+            const mainMatrix = generator.toSymbolMatrix(currentResult.canvas);
+            const text = topMatrix + '\n' + mainMatrix;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Text matrix copied to clipboard!');
+            });
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listeners for ratio slider
+            document.getElementById('baseAccentRatio').addEventListener('input', function() {
+                updateRatioDisplay();
+                generateCanvas();
+            });
+            
+            // Add event listener for seed input to auto-generate
+            document.getElementById('seedInput').addEventListener('input', function() {
+                console.log('Seed input changed, generating canvas...');
+                generateCanvas();
+            });
+            
+            // Add event listener for color picker
+            document.getElementById('hiddenColorInput').addEventListener('change', handleColorChange);
+            
+            // Initial ratio display update
+            updateRatioDisplay();
+            
+            // Initial color preview update
+            updateColorPreview();
+            
+            // Generate initial canvas
+            generateCanvas();
+        });
+    </script>
+</body>
+</html>
